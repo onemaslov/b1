@@ -209,11 +209,6 @@ export default function Home() {
               selectedMarkerId={selectedMarkerId}
               userLocation={userLocation}
             />
-            <LocationButton
-              onLocationRequest={handleLocationRequest}
-              isLoading={isGeoLoading}
-              hasPermission={hasPermission}
-            />
           </>
         )}
       </main>
