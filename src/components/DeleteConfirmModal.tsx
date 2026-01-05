@@ -34,7 +34,7 @@ export default function DeleteConfirmModal({
           <div>
             <h3 className="text-lg font-bold text-gray-900">Удалить метку?</h3>
             <p className="text-sm text-gray-600 mt-1">
-              Вы действительно хотите удалить метку <span className="font-semibold">"{markerTitle}"</span>?
+              Вы действительно хотите удалить метку <span className="font-semibold">&quot;{markerTitle}&quot;</span>?
             </p>
           </div>
         </div>
