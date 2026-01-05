@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
-import { Menu, Plus } from 'lucide-react'
+import { Menu, Plus, MapPin, Loader2 } from 'lucide-react'
 import type { Marker } from '@/types/marker'
 import Sidebar from '@/components/Sidebar'
 import MarkerModal from '@/components/MarkerModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
-import LocationButton from '@/components/LocationButton'
 import Toast from '@/components/Toast'
+import { MapPin } from 'lucide-react'
 import { useGeolocation } from '@/hooks/useGeolocation'
 
 // Динамический импорт карты (только на клиенте)
@@ -174,6 +174,18 @@ export default function Home() {
             >
               <Menu size={20} />
               <span className="hidden sm:inline">Список меток</span>
+            </button>
+            <button
+              onClick={handleLocationRequest}
+              disabled={isGeoLoading}
+              className="flex items-center gap-2 px-4 py-2 border border-primary-600 rounded-lg font-medium text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-60"
+            >
+              {isGeoLoading ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <MapPin size={20} />
+              )}
+              <span className="hidden sm:inline">Моё место</span>
             </button>
           </div>
         </div>
