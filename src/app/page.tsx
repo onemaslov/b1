@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
-import { Menu, Plus, Loader2 } from 'lucide-react'
+import { Menu, Plus, Loader2, MapPin } from 'lucide-react'
 import type { Marker } from '@/types/marker'
 import Sidebar from '@/components/Sidebar'
 import MarkerModal from '@/components/MarkerModal'
