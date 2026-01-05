@@ -18,18 +18,20 @@ interface MapProps {
   onMapClick: (lat: number, lng: number) => void
   onMarkerClick: (marker: Marker) => void
   selectedMarkerId?: string
+  userLocation?: { lat: number; lng: number } | null
 }
 
-export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId }: MapProps) {
+export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId, userLocation }: MapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const markersLayerRef = useRef<L.LayerGroup | null>(null)
+  const userMarkerRef = useRef<L.CircleMarker | null>(null)
 
   // Инициализация карты
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
-    // Создаем карту с центром на Москве
+    // Создаем карту с центром на Москве (по умолчанию)
     const map = L.map(mapContainerRef.current).setView([55.7558, 37.6173], 10)
 
     // Добавляем тайлы OpenStreetMap
@@ -54,6 +56,29 @@ export default function Map({ markers, onMapClick, onMarkerClick, selectedMarker
       mapRef.current = null
     }
   }, [onMapClick])
+
+  // Отображение местоположения пользователя
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return
+
+    // Удаляем старый маркер, если есть
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove()
+    }
+
+    // Создаем синий круг для обозначения позиции пользователя
+    const userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+      color: '#0ea5e9',
+      fillColor: '#0ea5e9',
+      fillOpacity: 0.3,
+      radius: 10,
+      weight: 2,
+    })
+      .bindPopup('Ваше местоположение')
+      .addTo(mapRef.current)
+
+    userMarkerRef.current = userMarker
+  }, [userLocation])
 
   // Обновление маркеров на карте
   useEffect(() => {
@@ -83,6 +108,15 @@ export default function Map({ markers, onMapClick, onMarkerClick, selectedMarker
       })
     }
   }, [selectedMarkerId, markers])
+
+  // Центрирование на местоположении пользователя
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return
+
+    mapRef.current.setView([userLocation.lat, userLocation.lng], 13, {
+      animate: true,
+    })
+  }, [userLocation])
 
   return (
     <div

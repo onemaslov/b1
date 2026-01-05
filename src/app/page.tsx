@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { Menu, Plus } from 'lucide-react'
 import type { Marker } from '@/types/marker'
 import Sidebar from '@/components/Sidebar'
 import MarkerModal from '@/components/MarkerModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
+import LocationButton from '@/components/LocationButton'
+import Toast from '@/components/Toast'
+import { useGeolocation } from '@/hooks/useGeolocation'
 
 // Динамический импорт карты (только на клиенте)
 const Map = dynamic(() => import('@/components/Map'), {
@@ -31,6 +34,17 @@ export default function Home() {
   const [clickedCoords, setClickedCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(true)
+  const [showGeoError, setShowGeoError] = useState(false)
+  
+  // Геолокация
+  const { location: userLocation, error: geoError, isLoading: isGeoLoading, hasPermission, requestLocation } = useGeolocation(true)
+
+  // Показываем ошибку геолокации
+  useEffect(() => {
+    if (geoError) {
+      setShowGeoError(true)
+    }
+  }, [geoError])
 
   // Загрузка меток при монтировании
   useEffect(() => {
@@ -132,6 +146,10 @@ export default function Home() {
     setSelectedMarkerId(markerId)
   }
 
+  const handleLocationRequest = () => {
+    requestLocation()
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden">
       {/* Заголовок */}
@@ -171,12 +189,20 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <Map
-            markers={markers}
-            onMapClick={handleMapClick}
-            onMarkerClick={handleMarkerClick}
-            selectedMarkerId={selectedMarkerId}
-          />
+          <>
+            <Map
+              markers={markers}
+              onMapClick={handleMapClick}
+              onMarkerClick={handleMarkerClick}
+              selectedMarkerId={selectedMarkerId}
+              userLocation={userLocation}
+            />
+            <LocationButton
+              onLocationRequest={handleLocationRequest}
+              isLoading={isGeoLoading}
+              hasPermission={hasPermission}
+            />
+          </>
         )}
       </main>
 
@@ -215,6 +241,15 @@ export default function Home() {
         onConfirm={handleMarkerDeleteConfirm}
         markerTitle={markerToDelete?.title || ''}
       />
+
+      {/* Toast уведомление об ошибке геолокации */}
+      {showGeoError && geoError && (
+        <Toast
+          message={geoError}
+          type="error"
+          onClose={() => setShowGeoError(false)}
+        />
+      )}
     </div>
   )
 }
