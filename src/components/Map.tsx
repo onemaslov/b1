@@ -20,14 +20,16 @@ interface MapProps {
   selectedMarkerId?: string
   userLocation?: { lat: number; lng: number } | null
   selectedLocation?: { lat: number; lng: number } | null
+  centerTo?: { lat: number; lng: number; zoom?: number } | null
 }
 
-export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId, userLocation, selectedLocation }: MapProps) {
+export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId, userLocation, selectedLocation, centerTo }: MapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const markersLayerRef = useRef<L.LayerGroup | null>(null)
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
   const selectedMarkerRef = useRef<L.Marker | null>(null)
+  const prevCenterToRef = useRef<{ lat: number; lng: number; zoom?: number } | null>(null)
 
   // Инициализация карты
   useEffect(() => {
@@ -157,6 +159,25 @@ export default function Map({ markers, onMapClick, onMarkerClick, selectedMarker
       selectedMarkerRef.current = marker
     }
   }, [selectedLocation])
+
+  // Программное центрирование карты (для поиска)
+  useEffect(() => {
+    if (!mapRef.current || !centerTo) return
+
+    // Проверяем, изменились ли координаты
+    const hasChanged = !prevCenterToRef.current ||
+      prevCenterToRef.current.lat !== centerTo.lat ||
+      prevCenterToRef.current.lng !== centerTo.lng
+
+    if (hasChanged) {
+      const zoom = centerTo.zoom || 15
+      mapRef.current.setView([centerTo.lat, centerTo.lng], zoom, {
+        animate: true,
+        duration: 1,
+      })
+      prevCenterToRef.current = centerTo
+    }
+  }, [centerTo])
 
   return (
     <div
