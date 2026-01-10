@@ -35,7 +35,7 @@ export default function Toast({ message, type = 'info', onClose, duration = 5000
 
   return (
     <div
-      className={`fixed top-20 right-4 z-50 max-w-md p-4 border rounded-lg shadow-lg animate-slide-in ${bgColors[type]}`}
+      className={`fixed top-20 right-4 z-[70] max-w-md p-4 border rounded-lg shadow-lg animate-slide-in ${bgColors[type]}`}
     >
       <div className="flex items-start gap-3">
         {icons[type]}

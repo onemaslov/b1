@@ -65,9 +65,8 @@ export default function Home() {
   }
 
   const handleMapClick = useCallback((lat: number, lng: number) => {
-    setClickedCoords({ lat, lng })
-    setSelectedMarker(null)
-    setIsMarkerModalOpen(true)
+    // Клик по карте больше не открывает модальное окно
+    // Метки добавляются только через кнопку "Добавить метку"
   }, [])
 
   const handleMarkerClick = useCallback((marker: Marker) => {
@@ -152,7 +151,7 @@ export default function Home() {
   return (
     <div className="h-screen w-screen overflow-hidden">
       {/* Заголовок */}
-      <header className="absolute top-0 left-0 right-0 z-10 bg-white shadow-md">
+      <header className="absolute top-0 left-0 right-0 z-30 bg-white shadow-md">
         <div className="flex items-center justify-between px-4 py-3">
           <h1 className="text-2xl font-bold text-gray-900">Карта с метками</h1>
           <div className="flex gap-2">
@@ -191,7 +190,7 @@ export default function Home() {
       </header>
 
       {/* Карта */}
-      <main className="h-full pt-16">
+      <main className="h-full pt-16 relative z-0">
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <div className="text-center">
