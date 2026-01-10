@@ -8,7 +8,9 @@ import Sidebar from '@/components/Sidebar'
 import MarkerModal from '@/components/MarkerModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 import Toast from '@/components/Toast'
+import LocationInfo from '@/components/LocationInfo'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { reverseGeocode, type GeocodingResult } from '@/lib/geocoding'
 
 // Динамический импорт карты (только на клиенте)
 const Map = dynamic(() => import('@/components/Map'), {
@@ -34,6 +36,11 @@ export default function Home() {
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | undefined>()
   const [isLoading, setIsLoading] = useState(true)
   const [showGeoError, setShowGeoError] = useState(false)
+  
+  // Информация о выбранной точке
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [geocodingResult, setGeocodingResult] = useState<GeocodingResult | null>(null)
+  const [isGeocoding, setIsGeocoding] = useState(false)
   
   // Геолокация
   const { location: userLocation, error: geoError, isLoading: isGeoLoading, hasPermission, requestLocation } = useGeolocation(true)
@@ -64,9 +71,15 @@ export default function Home() {
     }
   }
 
-  const handleMapClick = useCallback((lat: number, lng: number) => {
-    // Клик по карте больше не открывает модальное окно
-    // Метки добавляются только через кнопку "Добавить метку"
+  const handleMapClick = useCallback(async (lat: number, lng: number) => {
+    // Устанавливаем выбранную точку
+    setSelectedLocation({ lat, lng })
+    setIsGeocoding(true)
+    
+    // Получаем информацию об адресе
+    const result = await reverseGeocode(lat, lng)
+    setGeocodingResult(result)
+    setIsGeocoding(false)
   }, [])
 
   const handleMarkerClick = useCallback((marker: Marker) => {
@@ -253,6 +266,19 @@ export default function Home() {
           message={geoError}
           type="error"
           onClose={() => setShowGeoError(false)}
+        />
+      )}
+
+      {/* Информация о выбранной точке */}
+      {selectedLocation && (
+        <LocationInfo
+          result={geocodingResult}
+          coordinates={selectedLocation}
+          isLoading={isGeocoding}
+          onClose={() => {
+            setSelectedLocation(null)
+            setGeocodingResult(null)
+          }}
         />
       )}
     </div>
