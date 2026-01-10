@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
-import { Menu, Plus, Loader2, MapPin } from 'lucide-react'
+import { Menu, Plus, Loader2, MapPin, LogOut } from 'lucide-react'
 import type { Marker } from '@/types/marker'
 import Sidebar from '@/components/Sidebar'
 import MarkerModal from '@/components/MarkerModal'
@@ -12,6 +12,7 @@ import LocationInfo from '@/components/LocationInfo'
 import SearchBar from '@/components/SearchBar'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { reverseGeocode, type GeocodingResult } from '@/lib/geocoding'
+import { useRouter } from 'next/navigation'
 
 // Динамический импорт карты (только на клиенте)
 const Map = dynamic(() => import('@/components/Map'), {
@@ -27,6 +28,7 @@ const Map = dynamic(() => import('@/components/Map'), {
 })
 
 export default function Home() {
+  const router = useRouter()
   const [markers, setMarkers] = useState<Marker[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMarkerModalOpen, setIsMarkerModalOpen] = useState(false)
@@ -163,6 +165,17 @@ export default function Home() {
     requestLocation()
   }
 
+  // Обработка выхода
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      router.push('/login')
+      router.refresh()
+    } catch (error) {
+      console.error('Ошибка выхода:', error)
+    }
+  }
+
   // Обработка выбора места из поиска
   const handleSearchLocationSelect = useCallback(async (lat: number, lng: number, addMarker: boolean = false) => {
     // Устанавливаем выбранную точку
@@ -190,58 +203,66 @@ export default function Home() {
     <div className="h-screen w-screen overflow-hidden">
       {/* Заголовок */}
       <header className="absolute top-0 left-0 right-0 z-30 bg-white shadow-md">
-        <div className="flex flex-col gap-3 px-4 py-3">
-          {/* Верхняя панель с заголовком и кнопками */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Карта с метками</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setSelectedMarker(null)
-                  // Если есть выбранная точка на карте, используем её координаты
-                  if (selectedLocation) {
-                    setClickedCoords({ lat: selectedLocation.lat, lng: selectedLocation.lng })
-                  } else {
-                    setClickedCoords(null)
-                  }
-                  setIsMarkerModalOpen(true)
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-              >
-                <Plus size={20} />
-                <span className="hidden sm:inline">Добавить метку</span>
-              </button>
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Menu size={20} />
-                <span className="hidden sm:inline">Список меток</span>
-              </button>
-              <button
-                onClick={handleLocationRequest}
-                disabled={isGeoLoading}
-                className="flex items-center gap-2 px-4 py-2 border border-primary-600 rounded-lg font-medium text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-60"
-              >
-                {isGeoLoading ? (
-                  <Loader2 size={20} className="animate-spin" />
-                ) : (
-                  <MapPin size={20} />
-                )}
-                <span className="hidden sm:inline">Моё место</span>
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-3 px-4 py-3">
+          {/* Заголовок */}
+          <h1 className="text-xl font-bold text-gray-900 whitespace-nowrap">Карта с метками</h1>
           
           {/* Строка поиска */}
-          <div className="flex justify-center w-full">
+          <div className="flex-1 max-w-2xl">
             <SearchBar onLocationSelect={handleSearchLocationSelect} />
+          </div>
+          
+          {/* Кнопки */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSelectedMarker(null)
+                // Если есть выбранная точка на карте, используем её координаты
+                if (selectedLocation) {
+                  setClickedCoords({ lat: selectedLocation.lat, lng: selectedLocation.lng })
+                } else {
+                  setClickedCoords(null)
+                }
+                setIsMarkerModalOpen(true)
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+            >
+              <Plus size={20} />
+              <span className="hidden sm:inline">Добавить метку</span>
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Menu size={20} />
+              <span className="hidden sm:inline">Список меток</span>
+            </button>
+            <button
+              onClick={handleLocationRequest}
+              disabled={isGeoLoading}
+              className="flex items-center gap-2 px-4 py-2 border border-primary-600 rounded-lg font-medium text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-60"
+            >
+              {isGeoLoading ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <MapPin size={20} />
+              )}
+              <span className="hidden sm:inline">Моё место</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 border border-red-300 rounded-lg font-medium text-red-600 hover:bg-red-50 transition-colors"
+              title="Выход"
+            >
+              <LogOut size={20} />
+              <span className="hidden sm:inline">Выход</span>
+            </button>
           </div>
         </div>
       </header>
 
       {/* Карта */}
-      <main className="h-full pt-32 relative z-0">
+      <main className="h-full pt-16 relative z-0">
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <div className="text-center">

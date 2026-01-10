@@ -1,15 +1,20 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { getMarkersByUserId, createMarker } from '@/lib/db'
 import type { CreateMarkerInput } from '@/types/marker'
 
-// GET - Получить все метки
-export async function GET() {
+// GET - Получить все метки текущего пользователя
+export async function GET(request: NextRequest) {
   try {
-    const markers = await prisma.marker.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const userId = request.cookies.get('userId')?.value
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
+    const markers = getMarkersByUserId(userId)
     return NextResponse.json(markers)
   } catch (error) {
     console.error('Ошибка при получении меток:', error)
@@ -21,8 +26,17 @@ export async function GET() {
 }
 
 // POST - Создать новую метку
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const userId = request.cookies.get('userId')?.value
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const body: CreateMarkerInput = await request.json()
     
     if (!body.title || typeof body.latitude !== 'number' || typeof body.longitude !== 'number') {
@@ -32,13 +46,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const marker = await prisma.marker.create({
-      data: {
-        title: body.title,
-        description: body.description || null,
-        latitude: body.latitude,
-        longitude: body.longitude,
-      },
+    const marker = createMarker({
+      title: body.title,
+      description: body.description,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      userId,
     })
 
     return NextResponse.json(marker, { status: 201 })

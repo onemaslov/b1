@@ -1,16 +1,23 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+import { getMarkerById, updateMarker, deleteMarker } from '@/lib/db'
 import type { UpdateMarkerInput } from '@/types/marker'
 
 // GET - Получить одну метку
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const marker = await prisma.marker.findUnique({
-      where: { id: params.id },
-    })
+    const userId = request.cookies.get('userId')?.value
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
+    const marker = getMarkerById(params.id, userId)
 
     if (!marker) {
       return NextResponse.json(
@@ -31,21 +38,29 @@ export async function GET(
 
 // PATCH - Обновить метку
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const userId = request.cookies.get('userId')?.value
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
     const body: UpdateMarkerInput = await request.json()
 
-    const marker = await prisma.marker.update({
-      where: { id: params.id },
-      data: {
-        ...(body.title && { title: body.title }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.latitude !== undefined && { latitude: body.latitude }),
-        ...(body.longitude !== undefined && { longitude: body.longitude }),
-      },
-    })
+    const marker = updateMarker(params.id, userId, body)
+
+    if (!marker) {
+      return NextResponse.json(
+        { error: 'Метка не найдена' },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json(marker)
   } catch (error) {
@@ -59,13 +74,27 @@ export async function PATCH(
 
 // DELETE - Удалить метку
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await prisma.marker.delete({
-      where: { id: params.id },
-    })
+    const userId = request.cookies.get('userId')?.value
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Не авторизован' },
+        { status: 401 }
+      )
+    }
+
+    const success = deleteMarker(params.id, userId)
+
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Метка не найдена' },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
