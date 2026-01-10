@@ -19,13 +19,15 @@ interface MapProps {
   onMarkerClick: (marker: Marker) => void
   selectedMarkerId?: string
   userLocation?: { lat: number; lng: number } | null
+  selectedLocation?: { lat: number; lng: number } | null
 }
 
-export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId, userLocation }: MapProps) {
+export default function Map({ markers, onMapClick, onMarkerClick, selectedMarkerId, userLocation, selectedLocation }: MapProps) {
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const markersLayerRef = useRef<L.LayerGroup | null>(null)
   const userMarkerRef = useRef<L.CircleMarker | null>(null)
+  const selectedMarkerRef = useRef<L.Marker | null>(null)
 
   // Инициализация карты
   useEffect(() => {
@@ -117,6 +119,44 @@ export default function Map({ markers, onMapClick, onMarkerClick, selectedMarker
       animate: true,
     })
   }, [userLocation])
+
+  // Отображение выбранной точки (временный маркер)
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    // Удаляем старый маркер, если есть
+    if (selectedMarkerRef.current) {
+      selectedMarkerRef.current.remove()
+      selectedMarkerRef.current = null
+    }
+
+    // Если есть выбранная точка, создаем красный маркер
+    if (selectedLocation) {
+      // Создаем кастомную иконку для выбранной точки
+      const selectedIcon = L.divIcon({
+        className: 'custom-selected-marker',
+        html: `<div style="
+          width: 30px;
+          height: 30px;
+          background-color: #ef4444;
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          transform: translate(-50%, -50%);
+        "></div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      })
+
+      const marker = L.marker([selectedLocation.lat, selectedLocation.lng], {
+        icon: selectedIcon,
+      })
+        .bindPopup('Выбранная точка')
+        .addTo(mapRef.current)
+
+      selectedMarkerRef.current = marker
+    }
+  }, [selectedLocation])
 
   return (
     <div

@@ -171,7 +171,12 @@ export default function Home() {
             <button
               onClick={() => {
                 setSelectedMarker(null)
-                setClickedCoords(null)
+                // Если есть выбранная точка на карте, используем её координаты
+                if (selectedLocation) {
+                  setClickedCoords({ lat: selectedLocation.lat, lng: selectedLocation.lng })
+                } else {
+                  setClickedCoords(null)
+                }
                 setIsMarkerModalOpen(true)
               }}
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
@@ -219,6 +224,7 @@ export default function Home() {
               onMarkerClick={handleMarkerClick}
               selectedMarkerId={selectedMarkerId}
               userLocation={userLocation}
+              selectedLocation={selectedLocation}
             />
           </>
         )}
