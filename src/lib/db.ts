@@ -1,6 +1,5 @@
 import { execSync } from 'child_process'
 import path from 'path'
-import JSON from 'circular-json'
 
 export interface Marker {
   id: string
