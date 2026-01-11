@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMarkerById, updateMarker, deleteMarker } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import type { UpdateMarkerInput } from '@/types/marker'
 
 // GET - Получить одну метку
@@ -17,7 +17,12 @@ export async function GET(
       )
     }
 
-    const marker = getMarkerById(params.id, userId)
+    const marker = await prisma.marker.findFirst({
+      where: { 
+        id: params.id,
+        userId: userId,
+      },
+    })
 
     if (!marker) {
       return NextResponse.json(
@@ -53,14 +58,30 @@ export async function PATCH(
 
     const body: UpdateMarkerInput = await request.json()
 
-    const marker = updateMarker(params.id, userId, body)
+    // Проверяем, что метка принадлежит пользователю
+    const existingMarker = await prisma.marker.findFirst({
+      where: { 
+        id: params.id,
+        userId: userId,
+      },
+    })
 
-    if (!marker) {
+    if (!existingMarker) {
       return NextResponse.json(
         { error: 'Метка не найдена' },
         { status: 404 }
       )
     }
+
+    const marker = await prisma.marker.update({
+      where: { id: params.id },
+      data: {
+        ...(body.title && { title: body.title }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.latitude !== undefined && { latitude: body.latitude }),
+        ...(body.longitude !== undefined && { longitude: body.longitude }),
+      },
+    })
 
     return NextResponse.json(marker)
   } catch (error) {
@@ -87,14 +108,24 @@ export async function DELETE(
       )
     }
 
-    const success = deleteMarker(params.id, userId)
+    // Проверяем, что метка принадлежит пользователю
+    const existingMarker = await prisma.marker.findFirst({
+      where: { 
+        id: params.id,
+        userId: userId,
+      },
+    })
 
-    if (!success) {
+    if (!existingMarker) {
       return NextResponse.json(
         { error: 'Метка не найдена' },
         { status: 404 }
       )
     }
+
+    await prisma.marker.delete({
+      where: { id: params.id },
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

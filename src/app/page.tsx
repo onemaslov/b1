@@ -63,13 +63,20 @@ export default function Home() {
 
   const loadMarkers = async () => {
     try {
+      console.log('📥 Загружаю метки...')
       const response = await fetch('/api/markers')
+      console.log('📨 Статус ответа:', response.status)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Метки загружены:', data.length, 'шт')
         setMarkers(data)
+      } else {
+        const error = await response.json()
+        console.error('❌ Ошибка загрузки:', error)
       }
     } catch (error) {
-      console.error('Ошибка загрузки меток:', error)
+      console.error('❌ Ошибка загрузки меток:', error)
     } finally {
       setIsLoading(false)
     }
@@ -97,31 +104,45 @@ export default function Home() {
     longitude: number
   }) => {
     try {
+      console.log('📍 [Frontend] Отправляю метку:', data)
+      
       if (selectedMarker) {
         // Обновление существующей метки
+        console.log('✏️ Обновление метки:', selectedMarker.id)
         const response = await fetch(`/api/markers/${selectedMarker.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
 
+        console.log('📨 Ответ:', response.status)
         if (response.ok) {
           await loadMarkers()
+        } else {
+          const error = await response.json()
+          console.error('❌ Ошибка обновления:', error)
         }
       } else {
         // Создание новой метки
+        console.log('✨ Создание новой метки')
         const response = await fetch('/api/markers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         })
 
+        console.log('📨 Ответ от сервера:', response.status)
         if (response.ok) {
+          console.log('✅ Метка создана успешно')
           await loadMarkers()
+          setIsMarkerModalOpen(false)
+        } else {
+          const error = await response.json()
+          console.error('❌ Ошибка создания:', error)
         }
       }
     } catch (error) {
-      console.error('Ошибка сохранения метки:', error)
+      console.error('❌ Ошибка сохранения метки:', error)
     }
   }
 
