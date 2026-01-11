@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { CreateMarkerInput } from '@/types/marker'
 
+// Указываем что этот роут динамический
+export const dynamic = 'force-dynamic'
+
 // GET - Получить все метки текущего пользователя
 export async function GET(request: NextRequest) {
   try {

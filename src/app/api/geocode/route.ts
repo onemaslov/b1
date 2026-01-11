@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Указываем что этот роут динамический
+export const dynamic = 'force-dynamic'
+
 interface GeocodingResult {
   display_name: string
   lat: string

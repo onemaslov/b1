@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+// Указываем что этот роут динамический
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,31 +16,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Тестовая авторизация - просто проверяем логин и пароль
-    if (username === 'admin' && password === 'qwerty') {
-      const response = NextResponse.json({
-        success: true,
-        user: {
-          id: 'admin123',
-          username: 'admin',
-        },
-      })
+    // Ищем пользователя в БД
+    const user = await prisma.user.findUnique({
+      where: { username },
+    })
 
-      // Устанавливаем cookie с userId
-      response.cookies.set('userId', 'admin123', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 дней
-      })
-
-      return response
+    // Проверяем что пользователь существует и пароль верный
+    if (!user || user.password !== password) {
+      return NextResponse.json(
+        { error: 'Неверный логин или пароль' },
+        { status: 401 }
+      )
     }
 
-    return NextResponse.json(
-      { error: 'Неверный логин или пароль' },
-      { status: 401 }
-    )
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+      },
+    })
+
+    // Устанавливаем cookie с userId
+    response.cookies.set('userId', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 дней
+    })
+
+    return response
   } catch (error) {
     console.error('Ошибка авторизации:', error)
     return NextResponse.json(

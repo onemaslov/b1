@@ -6,50 +6,56 @@
 2. ✅ Миграция создана
 3. ✅ API использует Prisma ORM (совместим с PostgreSQL)
 4. ✅ Локально работает с SQLite (через PRAGMA foreign_keys OFF)
+5. ✅ Все API роуты помечены как динамические (исправлена ошибка билда)
 
 ## 🚀 Шаги для деплоя:
 
 ### 1. Получить Connection String из Supabase
 
-1. Зайдите в [Supabase](https://supabase.com)
+1. Зайдите в [Supabase Dashboard](https://supabase.com/dashboard)
 2. Откройте свой проект
-3. Settings → Database → Connection string
-4. Выберите **"URI"** (не Pooling!)
+3. **Settings** → **Database**
+4. Найдите **Connection string** → выберите **URI** (не Pooling!)
 5. Скопируйте строку (выглядит примерно так):
    ```
    postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
+   ```
+   или
+   ```
+   postgresql://postgres.xxx:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres
    ```
 
 ### 2. Добавить в Vercel Environment Variables
 
 1. Зайдите в [Vercel Dashboard](https://vercel.com/dashboard)
 2. Выберите свой проект
-3. Settings → Environment Variables
-4. Добавьте переменную:
+3. **Settings** → **Environment Variables**
+4. Нажмите **Add New**
+5. Заполните:
    - **Name:** `DATABASE_URL`
-   - **Value:** (ваш connection string из Supabase)
-   - **Environment:** Production, Preview, Development (выберите все)
+   - **Value:** (вставьте ваш connection string из Supabase)
+   - **Environments:** Отметьте **Production**, **Preview**, **Development**
+6. Нажмите **Save**
 
-### 3. Создать пользователя admin в Supabase
+### 3. Redeploy
 
-Выполните SQL в Supabase SQL Editor:
+После добавления переменной:
+- Перейдите в **Deployments**
+- Найдите последний деплой
+- Нажмите **три точки (...)** → **Redeploy**
 
-```sql
-INSERT INTO users (id, username, password, "createdAt", "updatedAt")
-VALUES ('admin123', 'admin', 'qwerty', NOW(), NOW());
-```
+### 4. Создать пользователя admin в Supabase
 
-### 4. Деплой на Vercel
+После успешного деплоя:
 
-```bash
-git add .
-git commit -m "Готов к деплою с PostgreSQL"
-git push
-```
+1. Откройте **SQL Editor** в Supabase
+2. Выполните:
+   ```sql
+   INSERT INTO users (id, username, password, "createdAt", "updatedAt")
+   VALUES ('admin123', 'admin', 'qwerty', NOW(), NOW());
+   ```
 
-Или через Vercel Dashboard: Settings → Git → Redeploy
-
-### 5. Проверка
+## ✅ Проверка
 
 1. Откройте ваш сайт на Vercel
 2. Войдите: `admin` / `qwerty`
@@ -61,21 +67,28 @@ git push
 ### Проблема: "Failed to connect to database"
 
 **Решение:**
-- Проверьте что Connection String правильный
+- Проверьте что Connection String правильный в Vercel Environment Variables
 - Убедитесь что используете **URI**, а не Pooling connection string
 - Проверьте что пароль правильный (нет лишних пробелов)
+- Проверьте что переменная применена ко всем окружениям (Production, Preview, Development)
 
 ### Проблема: "Table 'users' does not exist"
 
 **Решение:**
-- Миграция не применилась автоматически
-- Зайдите в Supabase SQL Editor
+- Миграция должна применяться автоматически при `npm run build`
+- Если не сработала, зайдите в Supabase SQL Editor
 - Выполните SQL из файла `prisma/migrations/20260111_init/migration.sql`
 
 ### Проблема: "Cannot login"
 
 **Решение:**
-- Создайте пользователя admin через SQL (см. Шаг 3)
+- Создайте пользователя admin через SQL (см. Шаг 4)
+- Проверьте что id пользователя именно `admin123`
+
+### Проблема: Ошибка при билде "dynamic server error"
+
+**Решение:**
+- Уже исправлено! Добавили `export const dynamic = 'force-dynamic'` во все API роуты
 
 ## 📝 Локальная разработка
 
@@ -88,13 +101,16 @@ DATABASE_URL="file:./dev.db"
 
 При коммите `.env.local` игнорируется (он в .gitignore)
 
+**НЕ запускайте `npx prisma generate` локально!** Schema.prisma настроена на PostgreSQL для прода.
+
 ## ✨ Готово!
 
 После деплоя:
 - ✅ На Vercel работает с PostgreSQL (Supabase)
 - ✅ Локально работает с SQLite
 - ✅ Метки сохраняются
-- ✅ Авторизация работает
+- ✅ Авторизация работает через БД
+- ✅ Билд проходит без ошибок
 
 Удачи! 🚀
 

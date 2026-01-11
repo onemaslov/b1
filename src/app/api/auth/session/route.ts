@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Указываем что этот роут динамический
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const userId = request.cookies.get('userId')?.value
